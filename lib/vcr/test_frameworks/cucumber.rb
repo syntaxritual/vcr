@@ -39,16 +39,7 @@ module VCR
         @main_object.Before(tag_name) do |scenario|
           options = original_options.dup
 
-          cassette_name = if options.delete(:use_scenario_name)
-            feature = scenario.respond_to?(:scenario_outline) ? scenario.scenario_outline.feature : scenario.feature
-            name = feature.name.split("\n").first
-            name << "/#{scenario.scenario_outline.name}" if scenario.respond_to?(:scenario_outline)
-            name << "/#{scenario.name.split("\n").first}"
-            name
-          else
-            "cucumber_tags/#{tag_name.gsub(/\A@/, '')}"
-          end
-
+          cassette_name = options.delete(:cassette_name) || get_cassette_name(tag_name, scenario, options)
           VCR.insert_cassette(cassette_name, options)
         end
 
@@ -60,5 +51,17 @@ module VCR
       end
     end
     alias :tag :tags
+
+    def get_cassette_name(tag_name, scenario, options)
+      if options.delete(:use_scenario_name)
+        feature = scenario.respond_to?(:scenario_outline) ? scenario.scenario_outline.feature : scenario.feature
+        name = feature.name.split("\n").first
+        name << "/#{scenario.scenario_outline.name}" if scenario.respond_to?(:scenario_outline)
+        name << "/#{scenario.name.split("\n").first}"
+        name
+      else
+        "cucumber_tags/#{tag_name.gsub(/\A@/, '')}"
+      end
+    end
   end
 end
